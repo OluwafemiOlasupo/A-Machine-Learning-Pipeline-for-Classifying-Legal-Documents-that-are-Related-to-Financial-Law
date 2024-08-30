@@ -5,7 +5,6 @@ from sklearn.svm import SVC
 from sklearn.feature_extraction.text import TfidfVectorizer
 import numpy as np
 
-
 # Load the pre-trained model and vectorizer
 @st.cache_resource
 def load_model_and_vectorizer():
@@ -15,26 +14,24 @@ def load_model_and_vectorizer():
         vectorizer = pickle.load(f)
     return model, vectorizer
 
-
 model, vectorizer = load_model_and_vectorizer()
 
-
 def process_csv(df):
-    # Assuming the text to be classified is in a column named 'Content'
-    if 'Column' not in df.columns:
-        raise ValueError("The CSV must contain a 'text' column for classification")
+    # Check if required columns are present
+    if 'Content' not in df.columns or 'SourceLanguage' not in df.columns:
+        raise ValueError("The CSV must contain 'Content' and 'SourceLanguage' columns for classification")
 
-    # Vectorize the text
-    X = vectorizer.transform(df['text'])
+    # Concatenate 'Content' and 'SourceLanguage' columns
+    df['TextToClassify'] = df['Content'] + " " + df['SourceLanguage']
+
+    # Vectorize the concatenated text
+    X = vectorizer.transform(df['TextToClassify'])
 
     # Make predictions
     predictions = model.predict(X)
 
     # Get confidence scores
-    # For SVM, we can use the distance from the hyperplane as a proxy for confidence
     confidence_scores = model.decision_function(X)
-
-    # Convert to probabilities using the sigmoid function
     confidence_scores = 1 / (1 + np.exp(-confidence_scores))
 
     # Generate simple explanations
@@ -49,13 +46,11 @@ def process_csv(df):
 
     return df[['DocumentID', 'Prediction', 'Confidence', 'Explanation']]
 
-
 def validate_csv(df):
-    required_columns = ['DocumentID', 'text']
+    required_columns = ['DocumentID', 'Content', 'SourceLanguage']
     missing_columns = [col for col in required_columns if col not in df.columns]
     if missing_columns:
         raise ValueError(f"Missing required columns: {', '.join(missing_columns)}")
-
 
 st.title('Document Relevance Classification')
 
@@ -63,7 +58,6 @@ uploaded_file = st.file_uploader("Choose a CSV file", type="csv")
 
 if uploaded_file is not None:
     try:
-        # Read the CSV file
         df = pd.read_csv(uploaded_file)
 
         # Validate the CSV structure
@@ -96,8 +90,3 @@ if uploaded_file is not None:
         st.error(f"An unexpected error occurred: {str(e)}")
 else:
     st.info("Please upload a CSV file to process.")
-
-
-
-
-
