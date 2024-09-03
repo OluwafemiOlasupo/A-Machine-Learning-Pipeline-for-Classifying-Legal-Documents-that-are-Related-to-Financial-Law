@@ -1,20 +1,20 @@
-# Use an official Python runtime as a parent image
-FROM python:3.10-slim
+# Use the official Python image.
+FROM python:3.11-slim
 
-# Set the working directory in the container
+# Set the working directory in the container.
 WORKDIR /app
 
-# Copy the current directory contents into the container at /app
+# Copy the current directory contents into the container.
 COPY . /app
 
-# Install any needed packages specified in requirements.txt
+# Install any needed packages specified in requirements.txt.
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Install Streamlit
-RUN pip install streamlit
-
-# Make port 8501 available to the world outside this container
+# Expose port 8501 for Streamlit.
 EXPOSE 8501
 
-# Run Streamlit app when the container launches
+# Define environment variable.
+ENV STREAMLIT_PORT=8501
+
+# Run Streamlit.
 CMD ["streamlit", "run", "Streamlit.py"]
